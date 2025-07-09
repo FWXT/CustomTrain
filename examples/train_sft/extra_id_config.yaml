@@ -1,0 +1,55 @@
+### model
+model_name_or_path: meta-llama/Llama-2-7b-hf
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_target: q_proj,v_proj
+lora_rank: 8
+lora_alpha: 16
+lora_dropout: 0.1
+
+### dataset
+dataset: alpaca_gpt4_en
+template: llama2
+cutoff_len: 1024
+max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 16
+
+### output
+output_dir: ./saves/LLaMA2-7B/lora/sft
+logging_steps: 10
+save_steps: 500
+plot_loss: true
+overwrite_output_dir: true
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 8
+learning_rate: 5.0e-5
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+
+### eval
+val_size: 0.1
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 250
+
+### Custom extra_id token settings
+# Freeze embeddings of <extra_id_1>, <extra_id_2>, etc. for the first 100 steps
+freeze_extra_id_steps: 100
+
+# Set loss weight for extra_id tokens to 0.1 (other tokens remain 1.0)
+extra_id_loss_weight: 0.1
+
+### Note about warm-up data:
+# For requirement 2 (training with warm-up data first), you can:
+# 1. Create a dataset configuration that includes your warm-up data first
+# 2. Modify the 'dataset' field above to point to your custom dataset
+# 3. The framework will process datasets in the order they appear in your dataset config

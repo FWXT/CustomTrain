@@ -23,6 +23,7 @@ from ...extras.logging import get_logger
 from ...extras.misc import calculate_tps
 from ...extras.ploting import plot_loss
 from ...model import load_model, load_tokenizer
+from ..callbacks import ExtraIdFreezeCallback
 from ..trainer_utils import create_modelcard_and_push
 from .metric import ComputeAccuracy, ComputeSimilarity, eval_logit_processor
 from .trainer import CustomSeq2SeqTrainer
@@ -77,6 +78,16 @@ def run_sft(
     gen_kwargs = generating_args.to_dict(obey_generation_config=True)
     gen_kwargs["eos_token_id"] = [tokenizer.eos_token_id] + tokenizer.additional_special_tokens_ids
     gen_kwargs["pad_token_id"] = tokenizer.pad_token_id
+
+    # Add custom callbacks
+    if callbacks is None:
+        callbacks = []
+    
+    # Add ExtraIdFreezeCallback if freeze_extra_id_steps > 0
+    if finetuning_args.freeze_extra_id_steps > 0:
+        extra_id_callback = ExtraIdFreezeCallback(tokenizer, finetuning_args)
+        callbacks.append(extra_id_callback)
+        logger.info_rank0(f"Added ExtraIdFreezeCallback for {finetuning_args.freeze_extra_id_steps} steps")
 
     # Initialize our Trainer
     trainer = CustomSeq2SeqTrainer(

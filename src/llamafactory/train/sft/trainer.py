@@ -100,7 +100,96 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
 
     @override
     def compute_loss(self, model, inputs, *args, **kwargs):
-        return super().compute_loss(model, inputs, *args, **kwargs)
+        """
+        Custom loss computation with weighted loss for extra_id tokens.
+        """
+        if hasattr(self.finetuning_args, 'extra_id_loss_weight') and self.finetuning_args.extra_id_loss_weight != 1.0:
+            return self._compute_weighted_loss(model, inputs, *args, **kwargs)
+        else:
+            return super().compute_loss(model, inputs, *args, **kwargs)
+    
+    def _compute_weighted_loss(self, model, inputs, *args, **kwargs):
+        """
+        Compute loss with custom weights for extra_id tokens.
+        """
+        labels = inputs.get("labels")
+        if labels is None:
+            return super().compute_loss(model, inputs, *args, **kwargs)
+            
+        # Get model outputs
+        outputs = model(**inputs)
+        logits = outputs.get("logits")
+        
+        if logits is None:
+            return super().compute_loss(model, inputs, *args, **kwargs)
+            
+        # Shift labels and logits for causal LM
+        shift_logits = logits[..., :-1, :].contiguous()
+        shift_labels = labels[..., 1:].contiguous()
+        
+        # Flatten the tokens
+        shift_logits = shift_logits.view(-1, shift_logits.size(-1))
+        shift_labels = shift_labels.view(-1)
+        
+        # Create loss weights
+        loss_weights = torch.ones_like(shift_labels, dtype=torch.float)
+        
+        # Find extra_id tokens and set their weights
+        extra_id_token_ids = self._get_extra_id_token_ids()
+        if len(extra_id_token_ids) > 0:
+            for token_id in extra_id_token_ids:
+                mask = (shift_labels == token_id)
+                loss_weights[mask] = self.finetuning_args.extra_id_loss_weight
+        
+        # Compute cross entropy loss
+        loss_fct = torch.nn.CrossEntropyLoss(reduction='none')
+        losses = loss_fct(shift_logits, shift_labels)
+        
+        # Apply weights and mask out ignored tokens
+        valid_mask = (shift_labels != IGNORE_INDEX)
+        weighted_losses = losses * loss_weights * valid_mask.float()
+        
+        # Compute final loss
+        if valid_mask.sum() > 0:
+            loss = weighted_losses.sum() / valid_mask.sum()
+        else:
+            loss = weighted_losses.sum()
+            
+        return loss
+    
+    def _get_extra_id_token_ids(self):
+        """
+        Get token IDs for extra_id tokens from the tokenizer.
+        """
+        if not hasattr(self, '_cached_extra_id_token_ids'):
+            self._cached_extra_id_token_ids = []
+            tokenizer = self.processing_class
+            
+            # Try to find extra_id tokens by encoding them directly
+            for i in range(1000):  # Check up to extra_id_999
+                extra_id_token = f"<extra_id_{i}>"
+                try:
+                    # Encode the token and get its ID(s)
+                    token_ids = tokenizer.encode(extra_id_token, add_special_tokens=False)
+                    # If the token exists and is encoded as a single token, add it
+                    if len(token_ids) == 1:
+                        token_id = token_ids[0]
+                        if token_id not in self._cached_extra_id_token_ids:
+                            self._cached_extra_id_token_ids.append(token_id)
+                    elif len(token_ids) == 0:
+                        # If encoding returns empty, the token doesn't exist
+                        break
+                    else:
+                        # If encoding returns multiple tokens, it means the token is not in vocab as a single token
+                        # We still add all the token IDs to be safe
+                        for token_id in token_ids:
+                            if token_id not in self._cached_extra_id_token_ids:
+                                self._cached_extra_id_token_ids.append(token_id)
+                except Exception:
+                    # If encoding fails, skip this token
+                    continue
+                    
+        return self._cached_extra_id_token_ids
 
     @override
     def prediction_step(

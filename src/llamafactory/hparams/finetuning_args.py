@@ -456,6 +456,15 @@ class FinetuningArguments(
         default=False,
         metadata={"help": "Whether or not to compute effective tokens per second."},
     )
+    # Custom arguments for extra_id token handling
+    freeze_extra_id_steps: int = field(
+        default=10,
+        metadata={"help": "Number of steps to freeze embeddings of extra_id tokens (e.g., <extra_id_1>, <extra_id_2>)."},
+    ) # !
+    extra_id_loss_weight: float = field(
+        default=0.1,
+        metadata={"help": "Loss weight for extra_id tokens in the output (default: 0.1, other tokens: 1.0)."},
+    )
 
     def __post_init__(self):
         def split_arg(arg):
