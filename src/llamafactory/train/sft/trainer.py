@@ -166,7 +166,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             tokenizer = self.processing_class
             
             # Try to find extra_id tokens by encoding them directly
-            for i in range(1000):  # Check up to extra_id_999
+            for i in range(100):  # Check up to extra_id_999
                 extra_id_token = f"<extra_id_{i}>"
                 try:
                     # Encode the token and get its ID(s)

@@ -1,0 +1,60 @@
+### model
+model_name_or_path: Qwen/Qwen2.5-Coder-0.5B
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: lora
+lora_target: q_proj,v_proj,k_proj,o_proj,gate_proj,up_proj,down_proj
+lora_rank: 8
+lora_alpha: 16
+lora_dropout: 0.1
+
+### dataset
+dataset: 800_train
+template: qwen
+cutoff_len: 2048
+max_samples: 800
+overwrite_cache: true
+preprocessing_num_workers: 4
+dataloader_num_workers: 2
+
+### output
+output_dir: ./saves/Qwen2.5-Coder-0.5B/lora/sft
+logging_steps: 5
+save_steps: 100
+plot_loss: true
+overwrite_output_dir: true
+save_only_model: false
+report_to: none
+
+### train
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 4
+learning_rate: 5.0e-4
+num_train_epochs: 3.0
+lr_scheduler_type: cosine
+warmup_ratio: 0.1
+bf16: true
+ddp_timeout: 180000000
+resume_from_checkpoint: null
+
+### eval
+val_size: 0.1
+per_device_eval_batch_size: 2
+eval_strategy: steps
+eval_steps: 50
+
+### Custom extra_id token settings (if needed)
+# Freeze embeddings of <extra_id_1>, <extra_id_2>, etc. for the first 100 steps
+freeze_extra_id_steps: 100
+
+# Set loss weight for extra_id tokens to 0.1 (other tokens remain 1.0)
+extra_id_loss_weight: 0.1
+
+### Debug settings
+# Enable debug mode for better error tracking
+debug: true
+# Reduce batch size and steps for quick testing
+# Increase logging frequency for debugging
