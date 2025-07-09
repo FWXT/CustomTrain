@@ -27,13 +27,15 @@ from ..callbacks import ExtraIdFreezeCallback
 from ..trainer_utils import create_modelcard_and_push
 from .metric import ComputeAccuracy, ComputeSimilarity, eval_logit_processor
 from .trainer import CustomSeq2SeqTrainer
+from copy import deepcopy
 
 
 if TYPE_CHECKING:
     from transformers import Seq2SeqTrainingArguments, TrainerCallback
 
     from ...hparams import DataArguments, FinetuningArguments, GeneratingArguments, ModelArguments
-
+else:
+    from transformers import TrainerCallback
 
 logger = get_logger(__name__)
 
@@ -49,7 +51,30 @@ def run_sft(
     tokenizer_module = load_tokenizer(model_args)
     tokenizer = tokenizer_module["tokenizer"]
     template = get_template_and_fix_tokenizer(tokenizer, data_args)
-    dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft", **tokenizer_module)
+    
+    # Handle warmup dataset if specified
+    main_dataset_module = None
+    warmup_dataset_module = None
+    
+    if (finetuning_args.warmup_dataset_steps is not None and 
+        finetuning_args.warmup_dataset_name is not None and 
+        training_args.do_train):
+        
+        # Load warmup dataset
+        warmup_data_args = deepcopy(data_args)
+        warmup_data_args.dataset = [finetuning_args.warmup_dataset_name]
+        warmup_dataset_module = get_dataset(template, model_args, warmup_data_args, training_args, stage="sft", **tokenizer_module)
+        
+        # Load main dataset
+        main_dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft", **tokenizer_module)
+        
+        # Use warmup dataset initially
+        dataset_module = warmup_dataset_module
+        logger.info_rank0(f"Using warmup dataset '{finetuning_args.warmup_dataset_name}' for first {finetuning_args.warmup_dataset_steps} steps")
+    else:
+        # Normal dataset loading
+        dataset_module = get_dataset(template, model_args, data_args, training_args, stage="sft", **tokenizer_module)
+    
     model = load_model(tokenizer, model_args, finetuning_args, training_args.do_train)
 
     if getattr(model, "is_quantized", False) and not training_args.do_train:
@@ -88,6 +113,36 @@ def run_sft(
         extra_id_callback = ExtraIdFreezeCallback(tokenizer, finetuning_args)
         callbacks.append(extra_id_callback)
         logger.info_rank0(f"Added ExtraIdFreezeCallback for {finetuning_args.freeze_extra_id_steps} steps")
+    
+    # Add WarmupDatasetSwitchCallback if warmup dataset is configured
+    if (main_dataset_module is not None and 
+        finetuning_args.warmup_dataset_steps is not None):
+        
+        # Create inline callback class
+        class WarmupDatasetSwitchCallback(TrainerCallback):
+            def __init__(self, warmup_steps: int, main_dataset_module: dict):
+                self.warmup_steps = warmup_steps
+                self.main_dataset_module = main_dataset_module
+                self.switched = False
+                self.trainer_ref = None
+            
+            def on_step_end(self, args, state, control, **kwargs):
+                if not self.switched and state.global_step >= self.warmup_steps:
+                    if self.trainer_ref is not None:
+                        self.trainer_ref.train_dataset = self.main_dataset_module["train_dataset"]
+                        if "eval_dataset" in self.main_dataset_module:
+                            self.trainer_ref.eval_dataset = self.main_dataset_module["eval_dataset"]
+                        self.switched = True
+                        logger.info_rank0(f"Switched to main dataset at step {state.global_step}")
+                    else:
+                        logger.warning_rank0(f"Could not access trainer instance at step {state.global_step}, dataset switch failed")
+        
+        warmup_callback = WarmupDatasetSwitchCallback(
+            finetuning_args.warmup_dataset_steps, 
+            main_dataset_module
+        )
+        callbacks.append(warmup_callback)
+        logger.info_rank0(f"Added WarmupDatasetSwitchCallback to switch at step {finetuning_args.warmup_dataset_steps}")
 
     # Initialize our Trainer
     trainer = CustomSeq2SeqTrainer(
@@ -101,6 +156,14 @@ def run_sft(
         **tokenizer_module,
         **metric_module,
     )
+    
+    # Set trainer reference in warmup callback after trainer is created
+    if (main_dataset_module is not None and 
+        finetuning_args.warmup_dataset_steps is not None):
+        for callback in callbacks:
+            if isinstance(callback, type(warmup_callback)):
+                callback.trainer_ref = trainer
+                break
 
     # Training
     if training_args.do_train:

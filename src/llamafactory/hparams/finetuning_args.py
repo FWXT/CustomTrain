@@ -465,6 +465,15 @@ class FinetuningArguments(
         default=0.1,
         metadata={"help": "Loss weight for extra_id tokens in the output (default: 0.1, other tokens: 1.0)."},
     )
+    # Warmup dataset arguments
+    warmup_dataset_steps: Optional[int] = field(
+        default=None,
+        metadata={"help": "Number of steps to use warmup dataset before switching to main dataset."},
+    )
+    warmup_dataset_name: Optional[str] = field(
+        default=None,
+        metadata={"help": "Name of the warmup dataset defined in dataset_info.json."},
+    )
 
     def __post_init__(self):
         def split_arg(arg):
