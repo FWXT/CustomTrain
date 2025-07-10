@@ -33,7 +33,8 @@ if TYPE_CHECKING:
 
 
 if is_jieba_available():
-    import jieba  # type: ignore
+    # import jieba  # type: ignore
+    pass
 
 
 if is_nltk_available():

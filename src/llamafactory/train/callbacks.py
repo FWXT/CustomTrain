@@ -457,33 +457,38 @@ class ExtraIdFreezeCallback(TrainerCallback):
             logger.info_rank0(f"Unfroze extra_id token embeddings at step {state.global_step}")
 
     def _freeze_extra_id_embeddings(self, model) -> None:
-        """Freeze the embeddings of extra_id tokens."""
-        if hasattr(model, 'module'):  # Handle DataParallel/DistributedDataParallel
+        """Freeze the embeddings of extra_id tokens using gradient hooks."""
+        if hasattr(model, 'module'):
             actual_model = model.module
         else:
             actual_model = model
-            
-        # Get input embeddings
+
         input_embeddings = actual_model.get_input_embeddings()
         if input_embeddings is None:
             logger.warning_rank0("Could not find input embeddings to freeze")
             return
-            
-        # Store original requires_grad state and freeze specific token embeddings
+
+        # 注册 hook 清除目标 token 的梯度
+        def make_hook(index):
+            def hook(grad):
+                grad[index] = 0
+                return grad
+            return hook
+
+        self.hooks = []  # 保存 hook handler 便于移除
         for token_id in self.extra_id_token_ids:
             if token_id < input_embeddings.weight.size(0):
-                param = input_embeddings.weight[token_id]
-                self.frozen_params.append((param, param.requires_grad))
-                param.requires_grad_(False)
-                
+                h = input_embeddings.weight.register_hook(make_hook(token_id))
+                self.hooks.append(h)
+
         self.is_frozen = True
-        logger.info_rank0(f"Froze embeddings for {len(self.extra_id_token_ids)} extra_id tokens for {self.freeze_steps} steps")
+        logger.info_rank0(f"Registered gradient hooks for {len(self.extra_id_token_ids)} extra_id tokens")
+
 
     def _unfreeze_extra_id_embeddings(self, model) -> None:
-        """Unfreeze the embeddings of extra_id tokens."""
-        # Restore original requires_grad state
-        for param, original_requires_grad in self.frozen_params:
-            param.requires_grad_(original_requires_grad)
-            
-        self.frozen_params.clear()
+        """Remove the gradient hooks to unfreeze the embeddings."""
+        for hook in getattr(self, "hooks", []):
+            hook.remove()
+        self.hooks = []
         self.is_frozen = False
+        logger.info_rank0("Removed gradient hooks to unfreeze extra_id token embeddings")

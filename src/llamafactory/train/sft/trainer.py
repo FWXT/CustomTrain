@@ -107,6 +107,7 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
             return self._compute_weighted_loss(model, inputs, *args, **kwargs)
         else:
             return super().compute_loss(model, inputs, *args, **kwargs)
+
     
     def _compute_weighted_loss(self, model, inputs, *args, **kwargs):
         """
@@ -155,7 +156,12 @@ class CustomSeq2SeqTrainer(Seq2SeqTrainer):
         else:
             loss = weighted_losses.sum()
             
-        return loss
+        return_outputs = kwargs.get("return_outputs", False)
+        if return_outputs:
+            return loss, outputs  # ✅ 返回 tuple
+        else:
+            return loss
+            
     
     def _get_extra_id_token_ids(self):
         """

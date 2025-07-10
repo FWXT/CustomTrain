@@ -1,4 +1,20 @@
 {
+  "perm2k_train": {
+    "file_name": "necessary_train.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+    "perm2k_valid_fixed": {
+    "file_name": "necessary_valid_seed42_8000.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
   "identity": {
     "file_name": "identity.json"
   },
