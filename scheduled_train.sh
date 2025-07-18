@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default values
-PARENT_DIR="/data1/qzq/CustomTrain"
+PARENT_DIR="/data/mnt_bucket/qzq/CustomTrain"
 DATE=""
 DEVICES="0,1,2,3,4,5,6,7"  # Default devices
 
@@ -59,10 +59,10 @@ if [ -z "$DATE" ]; then
 fi
 
 # Validate date format
-if ! [[ $DATE =~ ^[0-9]{8}$ ]]; then
-    echo "[ERROR] Date must be in YYYYMMDD format"
-    exit 1
-fi
+# if ! [[ $DATE =~ ^[0-9]{8}$ ]]; then
+#     echo "[ERROR] Date must be in YYYYMMDD format"
+#     exit 1
+# fi
 
 # Define directories
 SCHEDULE_DIR="$PARENT_DIR/examples/CoEditor/$USER/$DATE/schedule"
@@ -98,7 +98,7 @@ for yaml_file in "$SCHEDULE_DIR"/*.yaml; do
     echo "[INFO] Running: $basename"
     
     # Remove json cache
-    # rm -rf /home/ma-user/.cache/huggingface/datasets/json/
+    rm -rf /home/ma-user/.cache/huggingface/datasets/json/
 
     # Run the command and wait for it to complete
     nohup env ASCEND_RT_VISIBLE_DEVICES=$DEVICES \

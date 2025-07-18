@@ -1,0 +1,50 @@
+### model
+model_name_or_path: /data/mnt_bucket/model_init/Qwen2.5-Coder-0.5B
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+deepspeed: examples/deepspeed/ds_z3_config.json
+
+### dataset
+disable_shuffling: true
+dataset: paper_stage_4_train,paper_stage_2_train,paper_stage_1_train
+cutoff_len: 6000
+max_samples: 320000
+overwrite_cache: true
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### warmup
+
+
+### output
+output_dir: /data/mnt_bucket/qzq/CustomTrain/output/gsn/custom_train_new_stage_data/qzq_run_sft_0.5b_order_stage
+logging_steps: 50
+plot_loss: true
+save_steps: 500
+overwrite_output_dir: true
+save_only_model: false
+report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
+
+### train
+per_device_train_batch_size: 4
+gradient_accumulation_steps: 1
+learning_rate: 2e-5
+num_train_epochs: 2.0
+lr_scheduler_type: cosine
+# warmup_ratio: 0.1
+bf16: true
+weight_decay: 0.01
+ddp_timeout: 180000000
+resume_from_checkpoint: null
+freeze_extra_id_steps: 500
+extra_id_loss_weight: 0.01
+
+# ### eval
+eval_dataset: paper_stage_1_800_valid
+per_device_eval_batch_size: 4
+eval_strategy: steps
+eval_steps: 100

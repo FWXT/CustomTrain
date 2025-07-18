@@ -1,4 +1,92 @@
 {
+  "paper_stage_1_800_valid_zeta": {
+    "file_name": "llamafactory_data_parallel_multi_stage/stage_scale_1/necessary_valid_seed42_800_zeta.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "balanced_paper_stage_2_train_zeta": {
+    "file_name": "llamafactory_data_parallel_multi_stage/stage_scale_2/balanced_necessary_train_zeta.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "balanced_paper_stage_4_train_zeta": {
+    "file_name": "llamafactory_data_parallel_multi_stage/stage_scale_4/balanced_necessary_train_zeta.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "paper_stage_1_800_valid": {
+    "file_name": "llamafactory_data_parallel_multi_stage/stage_scale_1/necessary_valid_seed42_800.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "paper_stage_1_train": {
+    "file_name": "llamafactory_data_parallel_multi_stage/stage_scale_1/necessary_train.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "paper_stage_2_train": {
+    "file_name": "llamafactory_data_parallel_multi_stage/stage_scale_2/necessary_train.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "paper_stage_4_train": {
+    "file_name": "llamafactory_data_parallel_multi_stage/stage_scale_4/necessary_train.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "perm2k_train_new": {
+    "file_name": "necessary_train_new.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "perm2k_valid_fixed_new_800": {
+    "file_name": "necessary_valid_seed42_800_new.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "perm2k_train_new_warmup_15k_0.8": {
+    "file_name": "necessary_train_new_warmup_0.8.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "perm2k_train_warmup_15k_0.8": {
+    "file_name": "necessary_train_warmup_0.8.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
   "perm2k_train": {
     "file_name": "necessary_train.json",
     "columns": {
@@ -9,6 +97,14 @@
   },
     "perm2k_valid_fixed": {
     "file_name": "necessary_valid_seed42_8000.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "perm2k_valid_fixed_800": {
+    "file_name": "necessary_valid_seed42_800.json",
     "columns": {
       "prompt": "instruction",
       "query": "input",
