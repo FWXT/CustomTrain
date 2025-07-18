@@ -15,10 +15,40 @@
 import os
 import shutil
 from typing import TYPE_CHECKING, Any, Optional
-
+import numpy as np
 import torch
 import torch.distributed as dist
 from transformers import EarlyStoppingCallback, PreTrainedModel
+
+import torch.serialization
+from deepspeed.runtime.zero.config import ZeroStageEnum
+from deepspeed.runtime.fp16.loss_scaler import LossScaler
+from deepspeed.runtime.zero.stage_1_and_2 import DeepSpeedZeroOptimizer
+from deepspeed.runtime.zero.stage3 import DeepSpeedZeroOptimizer_Stage3
+
+# https://github.com/hiyouga/LLaMA-Factory/issues/7648
+# torch 2.5.1
+# transformers 4.51.3
+# deepspeed 0.16.4
+# torch.serialization.add_safe_globals([
+# ZeroStageEnum,
+# LossScaler,
+# DeepSpeedZeroOptimizer,
+# DeepSpeedZeroOptimizer_Stage3
+# ])
+from numpy.core.multiarray import _reconstruct, ndarray, dtype
+from numpy.dtypes import UInt32DType
+import numpy as np
+torch.serialization.add_safe_globals([_reconstruct])
+torch.serialization.add_safe_globals([ndarray])
+torch.serialization.add_safe_globals([dtype])
+torch.serialization.add_safe_globals([
+    np.core.multiarray._reconstruct,
+    np.dtype,                         # 添加 numpy dtype
+    np.dtypes.UInt32DType             # 添加具体的 uint32 类型
+])
+# from torch.serialization import add_safe_globals
+# add_safe_globals({'_reconstruct': np.core.multiarray._reconstruct})
 
 from ..data import get_template_and_fix_tokenizer
 from ..extras import logging

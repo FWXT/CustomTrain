@@ -192,3 +192,6 @@ data/train_new.json
 data/llamafactory_data_parallel_multi_stage/change_to_zeta_form/random_5000_test_v2.json
 data/llamafactory_data_parallel_multi_stage/change_to_zeta_form/random_5000_test_zeta.json
 data/valid_seed42_8000_new.json
+data/necessary_train_warmup_0.8.json
+data/necessary_valid_seed42_8000_new.json
+data/necessary_valid_seed42_8000_new.json

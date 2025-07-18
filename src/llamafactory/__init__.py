@@ -26,6 +26,21 @@ Use openmind: USE_OPENMIND_HUB=1
 """
 
 from .extras.env import VERSION
+import torch
+import torch.serialization
+from deepspeed.runtime.zero.config import ZeroStageEnum
+from deepspeed.runtime.fp16.loss_scaler import LossScaler
+from deepspeed.runtime.zero.stage_1_and_2 import DeepSpeedZeroOptimizer
+from deepspeed.runtime.zero.stage3 import DeepSpeedZeroOptimizer_Stage3
 
-
+# https://github.com/hiyouga/LLaMA-Factory/issues/7648
+# torch 2.5.1
+# transformers 4.51.3
+# deepspeed 0.16.4
+torch.serialization.add_safe_globals([
+ZeroStageEnum,
+LossScaler,
+DeepSpeedZeroOptimizer,
+DeepSpeedZeroOptimizer_Stage3
+])
 __version__ = VERSION
