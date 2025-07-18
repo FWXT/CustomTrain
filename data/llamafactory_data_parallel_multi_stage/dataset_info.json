@@ -1,0 +1,10 @@
+{
+  "perm2k_parallel": {
+    "file_name": "./llamafactory_data_parallel_multi_stage/train.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  }
+}
