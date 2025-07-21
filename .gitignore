@@ -195,3 +195,4 @@ data/valid_seed42_8000_new.json
 data/necessary_train_warmup_0.8.json
 data/necessary_valid_seed42_8000_new.json
 data/necessary_valid_seed42_8000_new.json
+*.json
