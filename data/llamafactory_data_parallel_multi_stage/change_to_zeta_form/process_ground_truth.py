@@ -1,7 +1,7 @@
 import json
 import os
 from typing import List
-from common import _Tokenizer, tokens_to_change, inline_output_tokens, normalize_code_by_ast
+from .common import _Tokenizer, tokens_to_change, inline_output_tokens, normalize_code_by_ast
 from tqdm import tqdm
 
 RAW_FILE = "/data/mnt_bucket/qzq/CustomTrain/data/llamafactory_data_parallel_multi_stage/change_to_zeta_form/random_5000_test_v2.json"
