@@ -40,8 +40,16 @@ def read_json(json_file):
     return data
 
 def write_json(data, output_file: str):
-    with open(output_file, 'w') as f:
-        json.dump(data, f, indent=2)
+    """
+    将字典数据写入JSON文件，支持中文字符。
+
+    Args:
+        data (dict): 要写入的字典数据。
+        output_file (str): 输出文件的路径。
+    """
+    with open(output_file, 'w', encoding='utf-8') as f: # 确保以 UTF-8 编码写入文件
+        json.dump(data, f, indent=2, ensure_ascii=False) # <--- 关键修改: ensure
+
 
 def read_jsonl(json_file: str):
     ret_list = []
