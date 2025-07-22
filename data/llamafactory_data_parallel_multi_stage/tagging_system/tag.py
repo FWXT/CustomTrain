@@ -178,10 +178,8 @@ async def main():
     template_md_file = current_dir / "template.md"
     prompts = fill_prompt_template(template_md_file,data_items,batch=True)
 
-    prompt = prompts[0]
-    for index, data_item in tqdm(enumerate(data_items)):
-        new_obj = data_item
-        prompt = prompts[index]
+    async def process_item(data_item, prompt):
+        new_obj = data_item.copy()  # 创建副本以避免修改原始数据
         new_obj["tags"] = []
         new_obj["tag_reasons"] = []
         try:
@@ -190,12 +188,19 @@ async def main():
             output_map = parse_string_to_dict(content)
             new_obj["tags"] = output_map["tags"]
             new_obj["tag_reasons"] = output_map["tag_reasons"]
-
+            return new_obj
         except asyncio.TimeoutError:
             print("请求超时！")
+            return new_obj
         except Exception as e:
             print(f"发生错误: {e}")
-    write_json(data_items,save_file)
+            return new_obj
+
+    # 创建并执行所有任务
+    tasks = [process_item(data_items[i], prompts[i]) for i in range(len(data_items))]
+    results = await asyncio.gather(*tasks)
+
+    write_json(results, save_file)
     
 
 if __name__ == "__main__":
