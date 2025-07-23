@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from openai import OpenAI # 导入 OpenAI 客户端
 import json
 from typing import Any, Dict
+from typing import List, Optional
 from pathlib import Path
 from tqdm import tqdm
 import numpy as np
@@ -12,6 +13,21 @@ import sys
 from copy import deepcopy
 # 获取当前文件的目录和父目录
 current_dir = Path(__file__).parent  # 当前文件所在目录
+
+
+class TokenLogprob(BaseModel):
+    token: str
+    logprob: float
+
+class TopLogprob(BaseModel):
+    token: str
+    logprob: float
+
+class SerializableLogprob(BaseModel):
+    token: str
+    logprob: float
+    bytes: List[int]
+    top_logprobs: Optional[List[TopLogprob]] = None
 
 def read_json(json_file):
     with open(json_file, 'r') as f:
@@ -141,6 +157,7 @@ async def ask_model(client, model_name, prompt, timeout=60):
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.3,
                     extra_body={"thinking": {"type": "disabled"}},
+                    logprobs=True
                 ),
                 timeout=timeout
             )
@@ -153,6 +170,7 @@ async def ask_model(client, model_name, prompt, timeout=60):
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.3,
                     extra_body={"thinking": {"type": "disabled"}},
+                    logprobs=True
                 ),
                 timeout=timeout
             )
@@ -185,9 +203,24 @@ async def main():
         try:
             response = await ask_model(client, config.model_name, prompt)
             content = response.choices[0].message.content
+            logprobs = response.choices[0].logprobs.content
             output_map = parse_string_to_dict(content)
             new_obj["tags"] = output_map["tags"]
             new_obj["tag_reasons"] = output_map["tag_reasons"]
+
+            serializable_probs = [
+                SerializableLogprob(
+                    token=logprob.token,
+                    logprob=logprob.logprob,
+                    bytes=logprob.bytes,
+                    top_logprobs=[
+                        TopLogprob(token=lp.token, logprob=lp.logprob)
+                        for lp in (logprob.top_logprobs or [])
+                    ]
+                ).dict()  # 转换为可序列化的字典
+                for logprob in logprobs
+            ]
+            new_obj["tag_probs"] = serializable_probs
             return new_obj
         except asyncio.TimeoutError:
             print("请求超时！")
