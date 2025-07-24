@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default values
-PARENT_DIR="/data/mnt_bucket/qzq/CustomTrain"
+PARENT_DIR="/data1/gsn/CustomTrain"
 DATE=""
 DEVICES="0,1,2,3,4,5,6,7"  # Default devices
 
