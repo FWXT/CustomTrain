@@ -8,7 +8,12 @@ from pathlib import Path
 from typing import cast, Iterable, TypeVar, Callable, Generic, Any
 from dataclasses import dataclass
 from transformers import AutoTokenizer
-
+import sys
+import os
+current_dir = Path(__file__).parent  # 当前文件所在目录
+parent_dir = current_dir.parent      # 当前文件的父目录
+sys.path.append(str(parent_dir))
+from share import MODEL_PATH
 # 定义缓存目录
 cache_dir = "model/"
 
@@ -30,7 +35,7 @@ E1 = TypeVar("E1", covariant=True)
 
 try:
     # 使用本地已下载的qwen2.5-coder-3b模型
-    local_model_path = "/data/mnt_bucket/qzq/CustomTrain/output/gsn/custom_train_new_stage_data/qzq_run_sft_0.5b_order_stage/checkpoint-17000"
+    local_model_path = MODEL_PATH
     
     if Path(local_model_path).exists():
         print(f"✅ 使用本地qwen2.5-coder-3b模型: {local_model_path}", flush=True)
