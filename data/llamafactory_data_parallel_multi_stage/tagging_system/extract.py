@@ -18,6 +18,8 @@ NEW_FILE = Path(current_dir) /  "test_extract.json"
 
 MAX_REF_TOKENS = 2048
 
+MAX_SAMPLES = 500
+
 import difflib
 
 def get_unified_diff(text1, text2):
@@ -198,7 +200,7 @@ def main():
     read_file = RAW_FILE
     write_file = NEW_FILE
     from change_to_zeta_form.process_ground_truth import get_code, extract_main_input
-    data = read_json(read_file)[:10]
+    data = read_json(read_file)[:MAX_SAMPLES]
     new_data = []
     for obj in tqdm(data, total=len(data)):
         new_obj = {}
