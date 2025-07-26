@@ -1,11 +1,18 @@
 import copy
+import sys
 from pathlib import Path
 from typing import Iterable
 
 from transformers import AddedToken, AutoTokenizer
 
 
-TOKENIZER_PATH = ""
+# 获取当前文件的目录和父目录
+current_dir = Path(__file__).parent  # 当前文件所在目录
+parent_dir = current_dir.parent      # 当前文件的父目录
+sys.path.append(str(parent_dir))
+
+from share import MODEL_PATH
+
 
 """
 Special tokens initialization
@@ -30,16 +37,17 @@ for i in range(N_Extra_Ids):
 Initialize _BaseTokenizer from TOKENIZER_PATH
 """
 try:
-    if Path(TOKENIZER_PATH).exists():
-        print(f"✅ 使用本地 qwen2.5-coder 模型: {TOKENIZER_PATH}")
+    local_path = MODEL_PATH
+    if Path(local_path).exists():
+        print(f"✅ 使用本地 qwen2.5-coder 模型: {local_path}")
         _BaseTokenizer = AutoTokenizer.from_pretrained(
-            TOKENIZER_PATH,
+            local_path,
             local_files_only=True, # 只使用本地文件
             trust_remote_code=True
         )
         print("✅ 成功加载本地 qwen2.5-coder tokenizer")
     else:
-        raise FileNotFoundError(f"本地模型路径不存在: {TOKENIZER_PATH}")
+        raise FileNotFoundError(f"本地模型路径不存在: {local_path}")
 
 except Exception as e:
     raise RuntimeError(f"⚠️ 无法加载本地 qwen2.5-coder tokenizer: {e}")

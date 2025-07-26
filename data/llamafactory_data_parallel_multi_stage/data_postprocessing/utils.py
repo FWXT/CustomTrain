@@ -81,7 +81,6 @@ def extract_sections_from_input(input_text: str,
     reference_section = ''
     if reference_pos != -1:
         reference_section = input_text[reference_pos + len(reference_marker):response_pos]
-        reference_section = reference_section[:-2] # remove the last two '\n'
 
     # extra id section
     def extract_extra_id_section(main_section: str) -> str:
