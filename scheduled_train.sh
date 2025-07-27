@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Default values
-PARENT_DIR="/data1/gsn/CustomTrain"
+# PARENT_DIR="/data1/qzq/CustomTrain"
+PARENT_DIR="$(dirname "$0")" # bash script directory
 DATE=""
 DEVICES="0,1,2,3,4,5,6,7"  # Default devices
 KILL_SCRIPT="$PARENT_DIR/kill_npu_process.sh"
@@ -202,7 +203,7 @@ for yaml_file in "$SCHEDULE_DIR"/*.yaml; do
     echo "[INFO] Running: $basename"
     
     # ！ Remove json cache 看你自己电脑需不需要
-    rm -rf /home/ma-user/.cache/huggingface/datasets/json/
+    # rm -rf /home/ma-user/.cache/huggingface/datasets/json/
 
     # Run the command and wait for it to complete
     nohup env ASCEND_RT_VISIBLE_DEVICES=$DEVICES \
