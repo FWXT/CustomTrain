@@ -4,10 +4,10 @@ import os
 from collections import Counter
 from pathlib import Path
 from typing import Optional
-from tqdm import tqdm
 
 from openai import OpenAI  # 导入 OpenAI 客户端
 from pydantic import BaseModel
+from tqdm import tqdm
 
 
 TAGGING_FEATURE_LIST = [
