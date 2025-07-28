@@ -1,7 +1,7 @@
 import json
 import re
 
-from tokenizer import _Tokenizer, inline_output_tokens, tokens_to_change
+from .tokenizer import _Tokenizer, inline_output_tokens, tokens_to_change
 
 
 """
@@ -212,3 +212,6 @@ def add_marker_around_output(output_section: str,
     # Add markers
     new_output_section = start_marker + output_section + end_marker
     return new_output_section
+
+def is_unchanged_output(output: str) -> bool:
+    return ("<add>" not in output) and ("<del>" not in output)
