@@ -1,19 +1,24 @@
-
-import os
 import asyncio
-from pydantic import BaseModel
-from openai import OpenAI # 导入 OpenAI 客户端
 import json
-from typing import Any, Dict
-from typing import List, Optional
+import os
+from collections import Counter
 from pathlib import Path
+from typing import Optional
+
+from openai import OpenAI  # 导入 OpenAI 客户端
+from pydantic import BaseModel
 from tqdm import tqdm
-import numpy as np
-import sys
-from copy import deepcopy
+
+
+TAGGING_FEATURE_LIST = [
+    '组件内的状态', '状态变量更改通知',
+    '行列与堆叠', '栅格与分栏', '滚动与滑动', '按钮与选择', '文本与输入', '图片与视频', '空白与分隔', '菜单', '动画', '弹窗', '自定义组件',
+    '尺寸设置', '位置设置', '边框设置', '图片边框设置', '背景设置', '透明度设置', '显隐控制', '禁用控制', '组件标识', '文本通用',
+    '点击事件', '触摸事件', '挂载卸载事件', '拖拽事件', '按键事件'
+]
+
 # 获取当前文件的目录和父目录
 current_dir = Path(__file__).parent  # 当前文件所在目录
-
 
 class TokenLogprob(BaseModel):
     token: str
@@ -26,17 +31,16 @@ class TopLogprob(BaseModel):
 class SerializableLogprob(BaseModel):
     token: str
     logprob: float
-    bytes: List[int]
-    top_logprobs: Optional[List[TopLogprob]] = None
+    bytes: list[int]
+    top_logprobs: Optional[list[TopLogprob]] = None
 
 def read_json(json_file):
-    with open(json_file, 'r') as f:
+    with open(json_file, encoding='utf-8') as f:
         data = json.load(f)
     return data
 
 def write_json(data, output_file: str):
-    """
-    将字典数据写入JSON文件，支持中文字符。
+    """将字典数据写入JSON文件, 支持中文字符.
 
     Args:
         data (dict): 要写入的字典数据。
@@ -45,11 +49,10 @@ def write_json(data, output_file: str):
     with open(output_file, 'w', encoding='utf-8') as f: # 确保以 UTF-8 编码写入文件
         json.dump(data, f, indent=2, ensure_ascii=False) # <--- 关键修改: ensure
 
-
 def parse_string_to_dict(input_string: str) -> dict:
-    """
-    尝试将输入的字符串反序列化为字典。
-    如果字符串包含 '```json' 和 '```'，会先去除Markdown代码块标记。
+    """尝试将输入的字符串反序列化为字典.
+
+    如果字符串包含 '```json' 和 '```', 会先去除Markdown代码块标记。
     否则，直接尝试将其反序列化。
 
     Args:
@@ -84,35 +87,32 @@ def parse_string_to_dict(input_string: str) -> dict:
         # 抛出自定义的ValueError
         raise ValueError(f"字符串解析错误: {e}")
 
-
-
 def fill_prompt_template(template_path, data_items, batch=False):
-    """
-    根据模板文件填充提示词,支持单条或批量数据处理
-    
+    """根据模板文件填充提示词,支持单条或批量数据处理.
+
     Args:
         template_path: prompt模板文件路径
         data_items: 单条JSON数据或数据列表
         batch: 是否批量处理,默认False
-        
+
     Returns:
         str或list: 填充后的提示词(单条)或提示词列表(批量)
     """
     try:
-        with open(template_path, 'r', encoding='utf-8') as f:
+        with open(template_path, encoding='utf-8') as f:
             template = f.read()
-            
+
         # 定义替换规则模板
         def get_replacements(item):
             return {
                 '{{DIFF}}': item.get('diff', ''),
             }
-            
+
         # 批量处理模式
         if batch:
             if not isinstance(data_items, list):
                 raise ValueError("批量处理模式下data_items必须是列表类型")
-                
+
             filled_prompts = []
             for item in data_items:
                 prompt = template
@@ -121,7 +121,7 @@ def fill_prompt_template(template_path, data_items, batch=False):
                     prompt = prompt.replace(placeholder, value.strip())
                 filled_prompts.append(prompt)
             return filled_prompts
-            
+
         # 单条处理模式
         else:
             filled_prompt = template
@@ -131,7 +131,7 @@ def fill_prompt_template(template_path, data_items, batch=False):
             for placeholder, value in replacements.items():
                 filled_prompt = filled_prompt.replace(placeholder, value.strip())
             return [filled_prompt]
-        
+
     except FileNotFoundError:
         print(f"找不到模板文件: {template_path}")
         return None
@@ -140,12 +140,11 @@ def fill_prompt_template(template_path, data_items, batch=False):
         return None
 
 class LLMConfig(BaseModel):
+    """LLM配置."""
     model_config = {'protected_namespaces': ()}
-    model_name: str = "deepseek-v3-250324" #"doubao-seed-1-6-250615"
+    model_name: str = "doubao-seed-1-6-250615" # "deepseek-v3-250324"
     api_base: str = "https://ark.cn-beijing.volces.com/api/v3"
-    api_key: str = os.getenv("LLM_API_KEY")
-
-
+    api_key: Optional[str] = os.getenv("LLM_API_KEY")
 
 async def ask_model(client, model_name, prompt, timeout=60):
     try:
@@ -178,23 +177,20 @@ async def ask_model(client, model_name, prompt, timeout=60):
     except asyncio.TimeoutError:
         raise TimeoutError(f"Request timed out after {timeout} seconds")
 
-async def main():
+async def tag_data(data_file: str, save_file: str, template: str):
     config = LLMConfig()
-  # 初始化 OpenAI 客户端
-  # base_url 应该指向你的 LLMConfig 中的 api_base
-  # api_key 可以直接从 config 中获取
+    # 初始化 OpenAI 客户端
+    # base_url 应该指向你的 LLMConfig 中的 api_base
+    # api_key 可以直接从 config 中获取
     client = OpenAI(
       base_url=config.api_base,
       api_key=config.api_key,
-  )
+    )
 
-  # 示例调用
-    data_file = current_dir / "test_extract.json"
-    save_file = current_dir / "test_llm_tag.json"
     data_items = read_json(data_file)
 
-    template_md_file = current_dir / "template.md"
-    prompts = fill_prompt_template(template_md_file,data_items,batch=True)
+    template_md_file = current_dir / "template" / template
+    prompts = fill_prompt_template(template_md_file, data_items, batch=True)
 
     async def process_item(data_item, prompt):
         new_obj = data_item.copy()  # 创建副本以避免修改原始数据
@@ -231,10 +227,28 @@ async def main():
 
     # 创建并执行所有任务
     tasks = [process_item(data_items[i], prompts[i]) for i in range(len(data_items))]
-    results = await asyncio.gather(*tasks)
+    results = []
+    for task in tqdm(asyncio.as_completed(tasks), total=len(tasks)):
+        result = await task
+        results.append(result)
+
+    # tag statistics
+    tag_counter = Counter(dict.fromkeys(TAGGING_FEATURE_LIST, 0))
+    unknown_tag_counter = Counter()
+    for obj in results:
+        for tag in obj['tags']:
+            if tag in TAGGING_FEATURE_LIST:
+                tag_counter[tag] += 1
+            else:
+                unknown_tag_counter[tag] += 1
+    print(f'Total samples: {len(results)}')
+    print(f'Known tags: {json.dumps(tag_counter, indent=2, ensure_ascii=False)}')
+    print(f'Unknown tags: {json.dumps(unknown_tag_counter, indent=2, ensure_ascii=False)}')
 
     write_json(results, save_file)
-    
 
 if __name__ == "__main__":
-  asyncio.run(main())
+  data_file = ""
+  save_file = ""
+  template = ""
+  asyncio.run(tag_data(data_file, save_file, template))
