@@ -142,14 +142,14 @@ def tokens_to_change(tokens: TokenSeq) -> tuple[str, str]:
     for line in lines:
         if '<add>' in line:
             # 包含<add>标记的行，添加到after_code中
-            # 移除<add>标记，保留后面的内容
-            after_content = line.lstrip().replace('<add>', '')
+            # 移除` <add> `标记，保留后面的内容
+            after_content = line.replace(' <add> ', '')
             if after_content:
                 after_lines.append(after_content)
         elif '<del>' in line:
             # 包含<del>标记的行，添加到before_code中
-            # 移除<del>标记，保留后面的内容
-            before_content = line.lstrip().replace('<del>', '')
+            # 移除` <del> `标记，保留后面的内容
+            before_content = line.replace(' <del> ', '')
             if before_content:
                 before_lines.append(before_content)
         else:

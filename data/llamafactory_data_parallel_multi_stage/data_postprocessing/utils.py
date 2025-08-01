@@ -168,10 +168,10 @@ def concat_sections_with_markers(sections: dict[str, str],
     if 'main_section' not in sections or not sections['main_section']:
         raise RuntimeError('No main_section key found or the value is None')
 
-    output = start_marker + sections["main_section"] + '\n\n'
+    output = start_marker + sections["main_section"]
 
     if 'reference_section' in sections and sections['reference_section']:
-        output += reference_marker + sections["reference_section"] + '\n\n'
+        output += reference_marker + sections["reference_section"]
 
     output += response_marker
 

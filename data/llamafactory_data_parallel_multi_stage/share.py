@@ -1,13 +1,18 @@
-MODEL_PATH = "/data1/gsn/CustomTrain/output/zeta_output/1.5b_07231700"
+MODEL_PATH = "/data1/model_init/Qwen2.5-Coder-1.5B"
 
 """
 Raw and output data.
 """
-RAW_DATA = "/data1/gsn/CustomTrain/data/llamafactory_data_parallel_multi_stage/data_postprocessing/data/raw/debug.json"
-NEW_DATA = "/data1/gsn/CustomTrain/data/llamafactory_data_parallel_multi_stage/data_postprocessing/data/new/debug.json"
-BALANCED_DATA = "/data1/gsn/CustomTrain/data/llamafactory_data_parallel_multi_stage/data_postprocessing/data/balanced/debug.json"
+RAW_DATA = "/data1/gsn/CustomTrain/data/88repo_1000_no_lsp/llamafactory_data_parallel_multi_stage/stage_scale_2/valid.json"
+NEW_DATA = "/data1/gsn/CustomTrain/data/88repo_1000_no_lsp/llamafactory_data_parallel_multi_stage/stage_scale_2/valid_zeta.json"
+BALANCED_DATA = "/data1/gsn/CustomTrain/data/88repo_1000_no_lsp/llamafactory_data_parallel_multi_stage/stage_scale_2/balance_valid_zeta.json"
 TAGGED_DATA = "/data1/gsn/CustomTrain/data/llamafactory_data_parallel_multi_stage/data_postprocessing/data/tagged/debug.json"
 TAG_SELECTED_DATA = "/data1/gsn/CustomTrain/data/llamafactory_data_parallel_multi_stage/data_postprocessing/data/tag_selected/debug.json"
+
+"""
+Prompt
+"""
+INSTRUCTION = 'You are a code completion assistant and your task is to analyze user edits reference and then rewrite an excerpt that the user provides, suggesting the appropriate edits diff within the excerpt, taking into account the <|editable_region|> region.\n\n'
 
 """
 Markers
@@ -18,8 +23,8 @@ INPUT_MARKERS = {
     'response': '### Response:\n\n'
 }
 EDITABLE_MARKERS = {
-    'start': '<extra_id_start>\n',
-    'end': '\n<extra_id_end>'
+    'start': '<|editable_region_start|>\n',
+    'end': '\n<|editable_region_end|>'
 }
 
 """

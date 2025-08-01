@@ -172,7 +172,7 @@ om_cache/
 cache/
 config/
 saves/
-output/
+output
 wandb/
 swanlog/
 generated_predictions.jsonl
@@ -198,3 +198,5 @@ data/necessary_valid_seed42_8000_new.json
 *.json
 data/coeditor-python
 data/llamafactory_data_parallel_multi_stage/data_postprocessing/data
+scheduled_train_no_recovery.sh
+data/88repo_*

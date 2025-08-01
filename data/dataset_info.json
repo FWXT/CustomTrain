@@ -1,4 +1,52 @@
 {
+  "stage_2_balance_valid_zeta_88repo_1000_no_lsp": {
+    "file_name": "88repo_1000_no_lsp/llamafactory_data_parallel_multi_stage/stage_scale_2/balance_valid_zeta.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "stage_2_balance_train_zeta_88repo_1000_no_lsp": {
+    "file_name": "88repo_1000_no_lsp/llamafactory_data_parallel_multi_stage/stage_scale_2/balance_train_zeta.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "stage_4_balance_train_zeta_88repo_1000_no_lsp": {
+    "file_name": "88repo_1000_no_lsp/llamafactory_data_parallel_multi_stage/stage_scale_4/balance_train_zeta.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "stage_2_balance_valid_zeta_88repo_100_no_lsp": {
+    "file_name": "88repo_100_no_lsp_/llamafactory_data_parallel_multi_stage/stage_scale_2/balance_valid_zeta.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "stage_2_balance_train_zeta_88repo_100_no_lsp": {
+    "file_name": "88repo_100_no_lsp_/llamafactory_data_parallel_multi_stage/stage_scale_2/balance_train_zeta.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "stage_4_balance_train_zeta_88repo_100_no_lsp": {
+    "file_name": "88repo_100_no_lsp_/llamafactory_data_parallel_multi_stage/stage_scale_4/balance_train_zeta.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
   "paper_stage_1_800_valid_zeta": {
     "file_name": "coeditor-python/necessary/stage_scale_1/necessary_valid_seed42_800_zeta.json",
     "columns": {

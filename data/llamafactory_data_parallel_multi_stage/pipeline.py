@@ -48,6 +48,9 @@ def raw_data_formatting(raw_file: str, new_file: str, keep_output: bool = True):
         new_obj['output_code'] = output_code
         new_obj['diff'] = get_unified_diff(editable_code, output_code)
 
+        # process prompt
+        new_obj['instruction'] = INSTRUCTION
+
         new_data.append(new_obj)
 
     write_json(new_data, new_file)
