@@ -55,6 +55,22 @@
       "response": "output"
     }
   },
+  "shuffle_balanced_paper_stage_2_train_zeta": {
+    "file_name": "coeditor-python/necessary/stage_scale_2/shuffle_balanced_necessary_train_zeta.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "shuffle_balanced_paper_stage_4_train_zeta": {
+    "file_name": "coeditor-python/necessary/stage_scale_4/shuffle_balanced_necessary_train_zeta.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
   "balanced_paper_stage_2_train_zeta": {
     "file_name": "coeditor-python/necessary/stage_scale_2/balanced_necessary_train_zeta.json",
     "columns": {

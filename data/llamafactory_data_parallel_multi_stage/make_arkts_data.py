@@ -55,7 +55,7 @@ def get_name_and_usage_pairs_by_line(
     n, pairs = len(line_changes), []
     for i, names in enumerate(names_by_line):
         for name in names:
-            for j in range(i, n):
+            for j in range(i + 1, n):
                 if is_matched(name, line_changes[j]):
                     pairs.append((i, j, name))
 
@@ -76,12 +76,15 @@ def process_usage_line_change(line_change: str, name: str):
     prev_changes = []
     for change in changes:
         if pattern in change:
-            masked_change = random_mask(change)
+            masked_change = random_mask(change) + '<|user_cursor_is_here|>'
             new_changes = prev_changes + [masked_change]
             if has_del:
                 # If line_change has `<del>`, it is always the last change
                 new_changes.append(changes[-1])
-            cases.append('\n'.join(new_changes))
+            case = '\n'.join(new_changes)
+            if not has_del:
+                case += '\n'
+            cases.append(case)
         prev_changes.append(change)
 
     return cases
@@ -113,11 +116,11 @@ def get_unidiff(x: str, y: str,
 
 def make_event_text(sections: dict[str, str], event_diff: str) -> str:
     def extract_editting_filename(main_section: str) -> str:
-        newline_pos = main_section.find('\n')
-        return main_section[:newline_pos]
+        newline_pos = main_section.find('\n') # filename is in the first line
+        return main_section[:newline_pos][len('# module: '):]
 
     filename = extract_editting_filename(sections['main_section'])
-    header = '### User Edited:\n\n' + filename + '\n\n'
+    header = f'### User Edits:\n\nUser edited file: \"{filename}\":\n\n'
 
     editable_section = sections['editable_section']
     old_editable_code = utils.get_code_from_diff(editable_section, '')
@@ -130,47 +133,46 @@ def make_event_text(sections: dict[str, str], event_diff: str) -> str:
 def process(input_text: str, output_text: str, no_ref: bool = False):
     extra_id_pattern = r'<extra_id_\d+>'
 
-    sections = utils.extract_sections_from_input(input_text)
+    raw_sections = utils.extract_sections_from_input(input_text)
 
-    editable_section = sections['editable_section']
+    raw_editable_section = raw_sections['editable_section']
     clean_output = output_text.replace('<s>', '').replace('</s>', '')
 
     # Remove the first empty segment which is before <extra_id_0>
     line_changes = re.split(extra_id_pattern, clean_output)[1:]
-    print(line_changes)
 
     names_by_line = [extract_variable_names_from_line_change(line_change) for line_change in line_changes]
-    print(names_by_line)
 
     pairs = get_name_and_usage_pairs_by_line(line_changes, names_by_line)
-    print(pairs)
 
-    raw_diff = output_text
     result = []
     for pair in pairs:
         name_line_id, usage_line_id, name = pair
 
         # make new diffs for `input`
         cases = process_usage_line_change(line_changes[usage_line_id], name)
-        new_diffs = [make_diff_from_new_line_change(line_changes, case, usage_line_id) for case in cases]
-        print(new_diffs)
+        input_diffs = [make_diff_from_new_line_change(line_changes, case, usage_line_id) for case in cases]
+        output_diff = make_diff_from_new_line_change(line_changes, line_changes[usage_line_id], usage_line_id)
 
         # make event text
         event_diff = make_diff_from_new_line_change(line_changes, line_changes[name_line_id], name_line_id)
-        event_text = make_event_text(sections, event_diff)
+        event_text = make_event_text(raw_sections, event_diff)
 
-        for diff in new_diffs:
-            new_editable_section = utils.get_code_from_diff(editable_section, diff)
+        for diff in input_diffs:
+            sections = copy.deepcopy(raw_sections)
+
+            new_editable_section = utils.get_code_from_diff(raw_editable_section, diff)
             new_editable_section = utils.add_marker_around_editable_section(new_editable_section, markers=share.EDITABLE_MARKERS)
 
             # process new input
-            sections['main_section'] = utils.replace_editable_section(sections['main_section'], editable_section, new_editable_section)
+            sections['main_section'] = utils.replace_editable_section(sections['main_section'], raw_editable_section, new_editable_section)
             if no_ref:
                 sections['reference_section'] = ''
+            sections['main_section'] = sections['main_section'].replace('# module: ', '```').rstrip() + '\n```\n\n'
             new_input_text = utils.concat_sections_with_markers(sections, markers=share.INPUT_MARKERS)
 
             # process new output
-            new_output_text = utils.get_code_from_diff(editable_section, raw_diff)
+            new_output_text = utils.get_code_from_diff(raw_editable_section, output_diff)
             new_output_text = utils.add_marker_around_output(new_output_text, markers=share.EDITABLE_MARKERS)
 
             input_output_diff = get_unidiff(new_editable_section, new_output_text, fromfile='input', tofile='output')
@@ -180,7 +182,7 @@ def process(input_text: str, output_text: str, no_ref: bool = False):
                 'output': new_output_text,
                 'input_output_diff': input_output_diff,
                 'event': event_text,
-                'editable_section': editable_section
+                'raw_editable_section': raw_editable_section
             }
             result.append(data)
 
@@ -189,6 +191,7 @@ def process(input_text: str, output_text: str, no_ref: bool = False):
 def main():
     raw_data = utils.read_json(RAW_FILE)
     new_data = []
+    random.seed(42)
     for obj in tqdm(raw_data, total=len(raw_data)):
         new_train_samples = process(obj['input'], obj['output'], no_ref=True)
         for sample in new_train_samples:
@@ -199,7 +202,7 @@ def main():
             new_obj['output'] = sample['output']
             new_obj['input_output_diff'] = sample['input_output_diff']
             new_obj['event'] = sample['event']
-            new_obj['raw_editable_section'] = sample['editable_section']
+            new_obj['raw_editable_section'] = sample['raw_editable_section']
             new_obj['raw_output'] = obj['output']
 
             new_data.append(new_obj)
