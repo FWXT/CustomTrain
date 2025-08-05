@@ -8,44 +8,36 @@ import share
 from tqdm import tqdm
 
 
-RAW_FILE = "/data1/gsn/CustomTrain/data/llamafactory_data_parallel_multi_stage/train_6560.json"
-NEW_FILE = "/data1/gsn/CustomTrain/data/llamafactory_data_parallel_multi_stage/train_6560_new.json"
+RAW_FILE = "/data1/gsn/CustomTrain/data/llamafactory_data_parallel_multi_stage/example.json"
+NEW_FILE = "/data1/gsn/CustomTrain/data/llamafactory_data_parallel_multi_stage/example_new.json"
 
-# def get_change_groups(clean_output: str) -> tuple[list[str], list[list[tuple[int, str]]]]:
-#     extra_id_pattern = r'<extra_id_\d+>'
-
-#     output_segments = re.split(extra_id_pattern, clean_output)[1:] # remove the first empty segment that is before <extra_id_0>
-
-#     change_groups = []
-#     group = []
-#     for i, segment in enumerate(output_segments):
-#         if not segment:
-#             if group:
-#                 change_groups.append(group)
-#             group = []
-#         else:
-#             group.append((i, segment))
-#     if group:
-#         change_groups.append(group)
-#     return output_segments, change_groups
-
-def extract_variable_names_from_line_change(line_change: str) -> list[str]:
-    """Extract varialbe names decorated by @State from change group."""
+def extract_variable_names_from_line_change(line_change: str) -> list[tuple[str, str]]:
+    """Extract varialbe names decorated by @State from line change."""
     pattern = r'^\s*(?:@\w+\s*)+\s*([a-zA-Z_]\w*)[\s:=]'
 
     names = []
     changes = line_change.split('\n')
-    for change in changes:
+    has_del = '<del>' in line_change
+
+    for i, change in enumerate(changes):
         if change.startswith(' <add> ') and '@State' in change:
             change_code = change.replace(' <add> ', '')
             m = re.search(pattern, change_code)
             if m:
-                names.append(m.group(1))
+                name = m.group(1)
+
+                copy_changes = copy.deepcopy(changes)
+                copy_changes.pop(i)
+                new_line_change = '\n'.join(copy_changes)
+                if not has_del:
+                    new_line_change += '\n'
+
+                names.append((name, new_line_change))
     return names
 
 def get_name_and_usage_pairs_by_line(
         line_changes: list[str],
-        names_by_line: list[list[str]]) -> list[tuple[int, int, str]]:
+        names_by_line: list[list[tuple[str, str]]]) -> list[tuple[int, int, str, str]]:
     def is_matched(name: str, line_change: str) -> bool:
         pattern = 'this.' + name
         return pattern in line_change
@@ -54,10 +46,10 @@ def get_name_and_usage_pairs_by_line(
 
     n, pairs = len(line_changes), []
     for i, names in enumerate(names_by_line):
-        for name in names:
+        for name, new_line_change in names:
             for j in range(i + 1, n):
                 if is_matched(name, line_changes[j]):
-                    pairs.append((i, j, name))
+                    pairs.append((i, j, name, new_line_change))
 
     return pairs
 
@@ -73,19 +65,15 @@ def process_usage_line_change(line_change: str, name: str):
     has_del = '<del>' in line_change
 
     cases = []
-    prev_changes = []
-    for change in changes:
+    for i, change in enumerate(changes):
         if pattern in change:
+            copy_changes = copy.deepcopy(changes)
             masked_change = random_mask(change) + '<|user_cursor_is_here|>'
-            new_changes = prev_changes + [masked_change]
-            if has_del:
-                # If line_change has `<del>`, it is always the last change
-                new_changes.append(changes[-1])
-            case = '\n'.join(new_changes)
+            copy_changes[i] = masked_change
+            case = '\n'.join(copy_changes)
             if not has_del:
                 case += '\n'
             cases.append(case)
-        prev_changes.append(change)
 
     return cases
 
@@ -114,7 +102,7 @@ def get_unidiff(x: str, y: str,
         unidiff = unidiff[2:]
     return ''.join(unidiff)
 
-def make_event_text(sections: dict[str, str], event_diff: str) -> str:
+def make_event_text(sections: dict[str, str], before_event_diff: str, after_event_diff: str) -> str:
     def extract_editting_filename(main_section: str) -> str:
         newline_pos = main_section.find('\n') # filename is in the first line
         return main_section[:newline_pos][len('# module: '):]
@@ -123,8 +111,8 @@ def make_event_text(sections: dict[str, str], event_diff: str) -> str:
     header = f'### User Edits:\n\nUser edited file: \"{filename}\":\n\n'
 
     editable_section = sections['editable_section']
-    old_editable_code = utils.get_code_from_diff(editable_section, '')
-    new_editable_code = utils.get_code_from_diff(editable_section, event_diff)
+    old_editable_code = utils.get_code_from_diff(editable_section, before_event_diff)
+    new_editable_code = utils.get_code_from_diff(editable_section, after_event_diff)
 
     # Discard '---' and '+++' lines
     unidiff = get_unidiff(old_editable_code, new_editable_code, remove_header=True)
@@ -147,16 +135,18 @@ def process(input_text: str, output_text: str, no_ref: bool = False):
 
     result = []
     for pair in pairs:
-        name_line_id, usage_line_id, name = pair
+        name_line_id, usage_line_id, name, event_line_change = pair
 
         # make new diffs for `input`
         cases = process_usage_line_change(line_changes[usage_line_id], name)
+        # TODO: if discard all changes after current extra id?
         input_diffs = [make_diff_from_new_line_change(line_changes, case, usage_line_id) for case in cases]
         output_diff = make_diff_from_new_line_change(line_changes, line_changes[usage_line_id], usage_line_id)
 
         # make event text
-        event_diff = make_diff_from_new_line_change(line_changes, line_changes[name_line_id], name_line_id)
-        event_text = make_event_text(raw_sections, event_diff)
+        before_event_diff = make_diff_from_new_line_change(line_changes, event_line_change, name_line_id) # before adding variable definition
+        after_event_diff = make_diff_from_new_line_change(line_changes, line_changes[name_line_id], name_line_id) # after adding variable definition
+        event_text = make_event_text(raw_sections, before_event_diff, after_event_diff)
 
         for diff in input_diffs:
             sections = copy.deepcopy(raw_sections)
@@ -206,6 +196,7 @@ def main():
             new_obj['raw_output'] = obj['output']
 
             new_data.append(new_obj)
+    random.shuffle(new_data)
     utils.write_json(new_data, NEW_FILE)
 
 if __name__ == '__main__':
