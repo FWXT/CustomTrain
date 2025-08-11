@@ -36,6 +36,14 @@ def read_jsonl(jsonl_file: str) -> list:
             data.append(json.loads(line))
     return data
 
+def write_jsonl(data: list, output_file: str):
+    # Create a new file or clean the current file
+    with open(output_file, 'w', encoding='utf-8'):
+        pass
+    with open(output_file, 'a', encoding='utf-8') as f:
+        for obj in data:
+            f.write(json.dumps(obj) + '\n')
+
 """
 'input' field in dataset processing functions
 """

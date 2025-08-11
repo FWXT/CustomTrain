@@ -3,10 +3,11 @@ import asyncio
 import copy
 import difflib
 import json
+import os
 
+import data_postprocessing.utils as utils
+import share
 from balance_data import balance_data
-from data_postprocessing.utils import *  # import all functions from utils.py
-from share import *
 from tagging_system.tag import tag_data
 from tqdm import tqdm
 
@@ -21,48 +22,51 @@ def get_unified_diff(text1, text2):
     return ''.join(diff)
 
 def raw_data_formatting(raw_file: str, new_file: str, keep_output: bool = True):
-    raw_data = read_json(raw_file)
+    raw_data = utils.read_json(raw_file)
 
     new_data = []
     for obj in tqdm(raw_data, total=len(raw_data)):
         new_obj = copy.deepcopy(obj)
 
-        sections = extract_sections_from_input(new_obj['input'], INPUT_MARKERS)
+        sections = utils.extract_sections_from_input(new_obj['input'], share.INPUT_MARKERS)
 
         # process main section
-        new_editable_section = add_marker_around_editable_section(sections['editable_section'], EDITABLE_MARKERS)
-        sections['main_section'] = replace_editable_section(sections['main_section'], sections['editable_section'], new_editable_section)
-        new_obj['input'] = concat_sections_with_markers(sections, INPUT_MARKERS)
+        new_editable_section = utils.add_marker_around_editable_section(sections['editable_section'], share.EDITABLE_MARKERS)
+        sections['main_section'] = utils.replace_editable_section(sections['main_section'], sections['editable_section'], new_editable_section)
+        new_obj['input'] = utils.concat_sections_with_markers(sections, share.INPUT_MARKERS)
 
         # process output
-        output_code = get_code_from_diff(sections['editable_section'], new_obj['output'])
-        new_output_section = add_marker_around_output(output_code, EDITABLE_MARKERS)
-        new_obj['is_unchanged'] = is_unchanged_output(new_obj['output'])
+        output_code = utils.get_code_from_diff(sections['editable_section'], new_obj['output'])
+        new_output_section = utils.add_marker_around_output(output_code, share.EDITABLE_MARKERS)
+        new_obj['is_unchanged'] = utils.is_unchanged_output(new_obj['output'])
         if keep_output:
             new_obj['diff_ground_truth'] = new_obj['output']
         new_obj['output'] = new_output_section
 
         # process unidiff for tagging
-        editable_code = get_code_from_diff(sections['editable_section'], '')
+        editable_code = utils.get_code_from_diff(sections['editable_section'], '')
         new_obj['editable_code'] = editable_code
         new_obj['output_code'] = output_code
         new_obj['diff'] = get_unified_diff(editable_code, output_code)
 
         # process prompt
-        new_obj['instruction'] = INSTRUCTION
+        new_obj['instruction'] = share.INSTRUCTION
 
         new_data.append(new_obj)
 
-    write_json(new_data, new_file)
+    utils.write_json(new_data, new_file)
+
+    new_jsonl_file = os.path.splitext(new_file)[0] + '.jsonl'
+    utils.write_jsonl(new_data, new_jsonl_file)
 
 def data_balancing(raw_file: str, new_file: str):
-    balance_data(raw_file, new_file, negative_keep_prob=NEGATIVE_KEEP_PROB, shuffle=True)
+    balance_data(raw_file, new_file, negative_keep_prob=share.NEGATIVE_KEEP_PROB, shuffle=True)
 
 def data_tagging(raw_file: str, new_file: str):
-    asyncio.run(tag_data(raw_file, new_file, TAGGING_PROMPT_TEMPLATE))
+    asyncio.run(tag_data(raw_file, new_file, share.TAGGING_PROMPT_TEMPLATE))
 
 def select_data_by_tags(raw_file: str, new_file: str, target_tags: list[str], threshold: dict[str, int]):
-    data = read_json(raw_file)
+    data = utils.read_json(raw_file)
 
     # Select samples by tags
     selected_samples = {tag: [] for tag in target_tags}
@@ -87,27 +91,27 @@ def select_data_by_tags(raw_file: str, new_file: str, target_tags: list[str], th
 
     if sample_indices:
         new_data = [data[i] for i in sample_indices]
-        write_json(new_data, new_file)
+        utils.write_json(new_data, new_file)
 
 def pipeline(is_balanced: bool,
              is_tagged: bool,
              is_selecting_tags: bool, target_tags: list[str], threshold: dict[str, int]):
     if is_selecting_tags:
         print('\nSelecting data by tags...')
-        select_data_by_tags(TAGGED_DATA, TAG_SELECTED_DATA, target_tags, threshold)
+        select_data_by_tags(share.TAGGED_DATA, share.TAG_SELECTED_DATA, target_tags, threshold)
     else:
         print('\nFormatting raw data...')
-        raw_data_formatting(RAW_DATA, NEW_DATA)
+        raw_data_formatting(share.RAW_DATA, share.NEW_DATA)
 
-        new_file = NEW_DATA
+        new_file = share.NEW_DATA
         if is_balanced:
             print('\nBalancing data...')
-            data_balancing(new_file, BALANCED_DATA)
-            new_file = BALANCED_DATA
+            data_balancing(new_file, share.BALANCED_DATA)
+            new_file = share.BALANCED_DATA
 
         if is_tagged:
             print('\nTagging data...')
-            data_tagging(new_file, TAGGED_DATA)
+            data_tagging(new_file, share.TAGGED_DATA)
 
     print('\nAll tasks finished')
 
@@ -124,4 +128,4 @@ if __name__ == '__main__':
              is_tagged=args.is_tagged,
              is_selecting_tags=is_selecting_tags,
              target_tags=args.tag_selection,
-             threshold=TAG_SELECTION_THRESHOLD)
+             threshold=share.TAG_SELECTION_THRESHOLD)

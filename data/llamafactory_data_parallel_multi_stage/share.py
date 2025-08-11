@@ -35,7 +35,7 @@ NEGATIVE_KEEP_PROB = 0.25 # for balancing data
 """
 Data tagging
 """
-TAGGING_PROMPT_TEMPLATE = "arkui_template.md"
+TAGGING_PROMPT_TEMPLATE: str = "arkui_template.md"
 
 # number of samples for each tag
 TAG_SELECTION_THRESHOLD = {
