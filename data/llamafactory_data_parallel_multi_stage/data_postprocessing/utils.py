@@ -21,28 +21,36 @@ def cutoff_str_by_token_num(s: str, max_len: int) -> str:
 json and jsonl processing functions
 """
 def read_json(json_file: str) -> dict | list:
+    print(f'=== Loading data from {json_file} ===')
     with open(json_file, encoding='utf-8') as f:
         data = json.load(f)
+    print('=== Loading finished ===')
     return data
 
 def write_json(data: dict | list, output_file: str):
+    print(f'=== Writing data to {output_file} ===')
     with open(output_file, 'w', encoding='utf-8') as f: # UTF-8 for chinese characters
         json.dump(data, f, indent=2, ensure_ascii=False) # for non-ASCII characters
+    print('=== Writing finished ===')
 
 def read_jsonl(jsonl_file: str) -> list:
     data = []
+    print(f'=== Loading data from {jsonl_file} ===')
     with open(jsonl_file, encoding='utf-8') as f:
         for _, line in enumerate(f.readlines()):
             data.append(json.loads(line))
+    print('=== Loading finished ===')
     return data
 
 def write_jsonl(data: list, output_file: str):
     # Create a new file or clean the current file
     with open(output_file, 'w', encoding='utf-8'):
         pass
+    print(f'=== Writing data to {output_file} ===')
     with open(output_file, 'a', encoding='utf-8') as f:
         for obj in data:
             f.write(json.dumps(obj) + '\n')
+    print('=== Writing finished ===')
 
 """
 'input' field in dataset processing functions

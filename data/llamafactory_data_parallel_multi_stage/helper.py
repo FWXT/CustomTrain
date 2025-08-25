@@ -5,8 +5,8 @@ from data_postprocessing.utils import read_json, write_json
 from tqdm import tqdm
 
 
-RAW_FILE = "/data1/gsn/CustomTrain/data/coeditor-python/necessary/stage_scale_2/balanced_necessary_train_zeta.json"
-NEW_FILE = "/data1/gsn/CustomTrain/data/coeditor-python/necessary/stage_scale_2/shuffle_balanced_necessary_train_zeta.json"
+RAW_FILE = "/data1/gsn/CustomTrain/data/coeditor-python/raw/stage_scale_4/train.json"
+NEW_FILE = "/data1/gsn/CustomTrain/data/coeditor-python/example/train_5.json"
 
 def check_input_and_output_lines():
     data = read_json(RAW_FILE)
@@ -29,6 +29,11 @@ def shuffle_dataset():
     random.shuffle(data)
     write_json(data, NEW_FILE)
 
+def extract_example_data():
+    data = read_json(RAW_FILE)
+    write_json(data[:5], NEW_FILE)
+
 if __name__ == '__main__':
     # check_input_and_output_lines()
-    shuffle_dataset()
+    # shuffle_dataset()
+    extract_example_data()

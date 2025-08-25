@@ -1,4 +1,36 @@
 {
+  "line_diff_eval": {
+    "file_name": "gsn_data/data_formatting/line_diff/eval.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "line_diff_train": {
+    "file_name": "gsn_data/data_formatting/line_diff/train.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "zeta_eval": {
+    "file_name": "gsn_data/data_formatting/zeta/eval.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "zeta_train": {
+    "file_name": "gsn_data/data_formatting/zeta/train.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
   "stage_2_balance_valid_zeta_88repo_1000_no_lsp": {
     "file_name": "88repo_1000_no_lsp/llamafactory_data_parallel_multi_stage/stage_scale_2/balance_valid_zeta.json",
     "columns": {

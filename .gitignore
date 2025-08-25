@@ -200,3 +200,4 @@ data/coeditor-python
 data/llamafactory_data_parallel_multi_stage/data_postprocessing/data
 scheduled_train_no_recovery.sh
 data/88repo_*
+data/gsn_data
