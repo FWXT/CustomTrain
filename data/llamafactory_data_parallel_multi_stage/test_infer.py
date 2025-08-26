@@ -2,13 +2,13 @@ import json
 from pathlib import Path
 
 import torch
-import torch_npu
+import torch_npu  # noqa: F401
 from peft import PeftModel
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
-NPU_DEVICE = 'npu:0'
+NPU_DEVICE = 'npu:7'
 
 device = torch.device(NPU_DEVICE)
 
@@ -74,23 +74,23 @@ def test_model(model_path: str, eval_path: str, output_dir: str):
 
 def load_lora_and_merge(model_path: str, lora_model_path: str, output_path: str):
     print(f'=== Loading base model from {model_path} ===')
-    model = AutoModelForCausalLM.from_pretrained(model_path, device_map=NPU_DEVICE)
+    model = AutoModelForCausalLM.from_pretrained(model_path)
 
     print(f'=== Loading LoRA model from {lora_model_path} ===')
-    lora_model = PeftModel.from_pretrained(model, lora_model_path, device_map=NPU_DEVICE)
+    lora_model = PeftModel.from_pretrained(model, lora_model_path)
 
     print('=== Merging LoRA weights into base model ===')
     model = lora_model.merge_and_unload()
 
     print(f'=== Loading tokenizer from {model_path} ===')
-    tokenizer = AutoTokenizer.from_pretrained(model_path, device_map=NPU_DEVICE)
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
 
     print(f'=== Saving merged model into {output_path} ===')
     model.save_pretrained(output_path)
     tokenizer.save_pretrained(output_path)
 
 def test():
-    output_dir = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/test_results/lora256_2'
+    output_dir = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/test_results/lora256_3'
 
     # full zeta
     model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_full_zeta_lora_merged'
@@ -114,19 +114,21 @@ def test():
 
 def save_lora_model():
     model_path = '/data1/model_init/Qwen2.5-Coder-7B'
+    lora_model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_full_zeta_lora'
+    output_path = lora_model_path + '_merged'
+    load_lora_and_merge(model_path, lora_model_path, output_path)
 
-    # lora_model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_full_zeta_lora'
-    # output_path = lora_model_path + '_merged'
-    # load_lora_and_merge(model_path, lora_model_path, output_path)
+    model_path = '/data1/model_init/Qwen2.5-Coder-7B'
+    lora_model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_full_line_diff_lora'
+    output_path = lora_model_path + '_merged'
+    load_lora_and_merge(model_path, lora_model_path, output_path)
 
-    # lora_model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_full_line_diff_lora'
-    # output_path = lora_model_path + '_merged'
-    # load_lora_and_merge(model_path, lora_model_path, output_path)
+    model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_full_zeta_lora_merged'
+    lora_model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_20zeta_80line_diff_lora'
+    output_path = lora_model_path + '_merged'
+    load_lora_and_merge(model_path, lora_model_path, output_path)
 
-    # lora_model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_20zeta_80line_diff_lora'
-    # output_path = lora_model_path + '_merged'
-    # load_lora_and_merge(model_path, lora_model_path, output_path)
-
+    model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_full_zeta'
     lora_model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_20zeta_80line_diff_sft_lora'
     output_path = lora_model_path + '_merged'
     load_lora_and_merge(model_path, lora_model_path, output_path)
