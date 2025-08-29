@@ -90,26 +90,36 @@ def load_lora_and_merge(model_path: str, lora_model_path: str, output_path: str)
     tokenizer.save_pretrained(output_path)
 
 def test():
-    output_dir = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/test_results/lora256_3'
+    output_dir = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/v2/test_results'
 
-    # full zeta
-    model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_full_zeta_lora_merged'
-    eval_path = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/zeta/eval.json'
-    test_model(model_path, eval_path, output_dir)
+    # # full zeta
+    # model_path = '/data1/gsn/CustomTrain/output/data_formatting/v2/7b_full_zeta'
+    # eval_path = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/v2/zeta/eval.json'
+    # test_model(model_path, eval_path, output_dir)
 
-    # full line diff
-    model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_full_line_diff_lora_merged'
-    eval_path = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/line_diff/eval.json'
-    test_model(model_path, eval_path, output_dir)
+    # # full line diff
+    # model_path = '/data1/gsn/CustomTrain/output/data_formatting/v2/7b_full_line_diff'
+    # eval_path = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/v2/line_diff/eval.json'
+    # test_model(model_path, eval_path, output_dir)
 
-    # 20% zeta & 80% line diff
-    model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_20zeta_80line_diff_lora_merged'
-    eval_path = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/line_diff/eval.json'
-    test_model(model_path, eval_path, output_dir)
+    # # 20% zeta & 80% line diff
+    # model_path = '/data1/gsn/CustomTrain/output/data_formatting/v2/7b_20zeta_80line_diff'
+    # eval_path = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/v2/line_diff/eval.json'
+    # test_model(model_path, eval_path, output_dir)
 
-    # 20% zeta & 80% line diff (sft + lora)
-    model_path = '/data1/gsn/CustomTrain/output/data_formatting/7b_20zeta_80line_diff_sft_lora_merged'
-    eval_path = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/line_diff/eval.json'
+    # # full seg zeta
+    # model_path = '/data1/gsn/CustomTrain/output/data_formatting/v2/7b_full_seg_zeta'
+    # eval_path = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/v2/seg_zeta/eval.json'
+    # test_model(model_path, eval_path, output_dir)
+
+    # # 20% zeta & 80% seg zeta
+    # model_path = '/data1/gsn/CustomTrain/output/data_formatting/v2/7b_20zeta_80seg_zeta'
+    # eval_path = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/v2/seg_zeta/eval.json'
+    # test_model(model_path, eval_path, output_dir)
+
+    # 20% zeta v1 & 80% seg zeta
+    model_path = '/data1/gsn/CustomTrain/output/data_formatting/v2/7b_20zeta_v1_80seg_zeta'
+    eval_path = '/data1/gsn/CustomTrain/data/gsn_data/data_formatting/v2/seg_zeta/eval.json'
     test_model(model_path, eval_path, output_dir)
 
 def save_lora_model():

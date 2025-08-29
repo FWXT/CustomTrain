@@ -1,0 +1,51 @@
+### model
+model_name_or_path: /data1/gsn/CustomTrain/output/data_formatting/v2/7b_full_zeta
+trust_remote_code: true
+
+### method
+stage: sft
+do_train: true
+finetuning_type: full
+deepspeed: examples/deepspeed/ds_z3_config.json
+
+### dataset
+disable_shuffling: false
+dataset: zeta_train_v2,seg_zeta_train_v2
+mix_strategy: interleave_under
+interleave_probs: 0.2,0.8
+cutoff_len: 8192
+max_samples: 1000
+overwrite_cache: true
+preprocessing_num_workers: 16
+dataloader_num_workers: 4
+
+### warmup
+freeze_extra_id_steps: 0
+extra_id_loss_weight: 1.0
+
+### output
+output_dir: /data1/gsn/CustomTrain/output/data_formatting/v2/7b_20zeta_80seg_zeta
+logging_steps: 5
+plot_loss: true
+save_steps: 5000
+overwrite_output_dir: true
+save_only_model: false
+report_to: none  # choices: [none, wandb, tensorboard, swanlab, mlflow]
+
+### train
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 1
+learning_rate: 2e-5
+num_train_epochs: 2.0
+lr_scheduler_type: cosine
+# warmup_ratio: 0.1
+bf16: true
+weight_decay: 0.01
+ddp_timeout: 180000000
+resume_from_checkpoint: null
+
+# ### eval
+val_size: 0.1
+per_device_eval_batch_size: 1
+eval_strategy: steps
+eval_steps: 10

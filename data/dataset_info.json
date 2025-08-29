@@ -1,6 +1,22 @@
 {
-  "line_diff_eval": {
-    "file_name": "gsn_data/data_formatting/line_diff/eval.json",
+  "seg_zeta_train_v2": {
+    "file_name": "gsn_data/data_formatting/v2/seg_zeta/train.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "line_diff_train_v2": {
+    "file_name": "gsn_data/data_formatting/v2/line_diff/train.json",
+    "columns": {
+      "prompt": "instruction",
+      "query": "input",
+      "response": "output"
+    }
+  },
+  "zeta_train_v2": {
+    "file_name": "gsn_data/data_formatting/v2/zeta/train.json",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -8,15 +24,7 @@
     }
   },
   "line_diff_train": {
-    "file_name": "gsn_data/data_formatting/line_diff/train.json",
-    "columns": {
-      "prompt": "instruction",
-      "query": "input",
-      "response": "output"
-    }
-  },
-  "zeta_eval": {
-    "file_name": "gsn_data/data_formatting/zeta/eval.json",
+    "file_name": "gsn_data/data_formatting/v1/line_diff/train.json",
     "columns": {
       "prompt": "instruction",
       "query": "input",
@@ -24,7 +32,7 @@
     }
   },
   "zeta_train": {
-    "file_name": "gsn_data/data_formatting/zeta/train.json",
+    "file_name": "gsn_data/data_formatting/v1/zeta/train.json",
     "columns": {
       "prompt": "instruction",
       "query": "input",
